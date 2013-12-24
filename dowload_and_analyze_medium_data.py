@@ -10,13 +10,11 @@ Created by James H. Faghmous (jfagh@cs.umn.edu) on 2013-12-11.
 import requests
 import re
 import matplotlib.pyplot as plt
-import csv
+from matplotlib import mlab
 import numpy as np
 from pylab import *
 import json
-from pprint import pprint
 import logging
-import math
 from mpl_toolkits.axes_grid1 import make_axes_locatable
 
 logging.basicConfig(level=logging.DEBUG) #this is still in dev so I have debugging on
@@ -126,8 +124,6 @@ def make_scatter_w_hists(followerData,postData):
 	plt.draw()
 	plt.show()
 	
-	
-
 #pase_collection_activity(activity_string):
 # takes a string that has last activity information and returns an integer that contains the last activity in MINUTES
 # these are rough estimates for instance I don't worry if a month has 28 or 31 days
@@ -211,7 +207,36 @@ def load_collection_stats_json(file_path):
 def save_collection_json(collection_data,file_path):
 	save_file = open(file_path, 'w')
 	save_file.write( json.dumps(collection_data) )
-
+	
+#prints basic stats about a collection -- this readable for followers and posts. For activity you need to convert all activiy from minutes to your desired time-span (i.e. days)
+def print_basic_collecton_statistics(collection_array, quantity):
+	data_array = np.array(collection_array)
+	data_mean = mean(data_array)
+	data_std = std(data_array)
+	data_median = median(data_array)
+	q90 = percentile(data_array,90)
+	#print stats and make some basic transformations for the 'minutes since last update' to make it human readable
+	if quantity == 'followers' or quantity == 'posts':
+		print '========================= '+ quantity.upper() + ' stats ' + '========================='
+		print 'The mean number of ' + quantity.upper() + ' per collection is: ' + str(data_mean)
+		print 'The standard deviaton of ' + quantity.upper() + ' per collection is: ' + str(data_std)
+		print 'The median of ' + quantity.upper() + ' per collection is: ' + str(data_median) #the median is the number in a population that has as many numbers higher than it and lower than it
+		print 'Ninty percent of collections have ' + str(q90) + ' or less ' + quantity.upper()
+		print str((float(len(where(data_array ==0)[0]))/ len(data_array))  * 100.)+ ' percent of collections had 0 ' + quantity.upper()
+		print str((float(len(where(data_array ==1)[0]))/ len(data_array))  * 100.)+ ' percent of collections had 1 ' + quantity.upper()
+		print str((float(len(where(data_array <=100 )[0]))/ len(data_array))  * 100.)+ ' percent of collections had 100 or less ' + quantity.upper()
+		print str((float(len(where(data_array >=1000 )[0]))/ len(data_array))  * 100.)+ ' percent of collections had 1000 or more ' + quantity.upper()
+	else: #assuming the only othr quatity is minutes since last update
+		print '========================= '+ quantity.upper() + ' stats ' + '========================='
+		print 'The mean number of ' + quantity.upper() + ' per collection is: ' + str(data_mean) + ' or ' + str(data_mean/(60*24)) + ' days'
+		print 'The standard deviaton of ' + quantity.upper() + ' per collection is: ' + str(data_std) + ' or ' + str(data_std/(60*24)) + ' days'
+		print 'The median of ' + quantity.upper() + ' per collection is: ' + str(data_median) +' or ' + str(data_median/(60*24)) + ' days' #the median is the number in a population that has as many numbers higher than it and lower than it
+		print 'Ninty percent of collections have ' + str(q90) + ' or less ' + quantity.upper()
+		print str((float(len(where(data_array <=24*60)[0]))/ len(data_array))  * 100.)+ ' percent of collections have been updated in the last 24 hours ' 
+		print str((float(len(where(data_array <=24*60*7)[0]))/ len(data_array))  * 100.)+ ' percent of collections have been updated in the last week '
+		print str((float(len(where(data_array <=4*60*30)[0]))/ len(data_array))  * 100.)+ ' percent of collections have been updated a month ago'
+		print str((float(len(where(data_array >=525600.0)[0]))/ len(data_array))  * 100.)+ ' percent of collections have been updated a year ago'
+	
 ############## main ##################
 def main():
 	saved = 1 #set this 0 if you have no data saved
@@ -237,6 +262,12 @@ def main():
 	#uncomment below to plot some basic stats
 	#plot_stats(postCount_data,followerCount_data,activity_data)	
 	#make_scatter_w_hists(followerCount_data,postCount_data)
+	
+	#uncomment below to print some basic stats about each collection metric
+	#print_basic_collecton_statistics(followerCount_data, 'followers')
+	#print_basic_collecton_statistics(postCount_data, 'posts')
+	#print_basic_collecton_statistics(activity_data, 'minutes since last update')
+	
 
 
 if __name__ == '__main__':
